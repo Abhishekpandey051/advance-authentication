@@ -1,0 +1,29 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "Advance authentication with MERN",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon -r dotenv/config --experimental-json-modules server.js"
+  },
+  "keywords": [
+    "node",
+    "js",
+    "backend",
+    "front-end"
+  ],
+  "author": "Abhishek pandey",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.17.2",
+    "nodemailer": "^7.0.5",
+    "nodemon": "^3.1.10"
+  }
+}
