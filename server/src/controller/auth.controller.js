@@ -2,6 +2,7 @@ import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { User } from "../model/user.model.js";
+import { transporter } from "../nodemailer/nodemailer.js";
 
 const options = {
   httpOnly: true,
@@ -31,13 +32,22 @@ const userRegister = asyncHandler(async (req, res) => {
   const createdUser = await User.findById(user._id).select(
     "-password -varifyOtp -verifyOtpExpireAt -resetOtp -resetOtpExpireAt"
   );
+  //sending welcome email to user
+  const emailOption = {
+    from: process.env.SENDER_EMAIL,
+    to: user.email,
+    subject: "Welcome to our application",
+    text: `Hello ${user.name},\n\nThank you for registering with our application! We're excited to have you on board.\n\nBest regards,\nThe Team`,
+  };
+
+  await transporter.sendMail(emailOption);
+
   return res
     .status(201)
     .json(new ApiResponse(200, createdUser, "User register successfully"));
 });
 
 // Login user - API
-
 const userLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   if ([email, password].some((field) => field?.trim() === "")) {
@@ -49,7 +59,7 @@ const userLogin = asyncHandler(async (req, res) => {
     res.status(400);
     throw new ApiError(400, "user does not exist");
   }
-  const isPasswordCorrect = await user.isPasswordNatched(password);
+  const isPasswordCorrect = await user.isPasswordMatched(password);
   if (!isPasswordCorrect) {
     res.status(400);
     throw new ApiError(400, "Invalid credentials");
@@ -90,4 +100,38 @@ const userLogout = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "User logout successfully"));
 });
 
-export { userRegister, userLogin, userLogout };
+// change (forgot) current password - API
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!(oldPassword || newPassword)) {
+    throw new ApiError(400, "Old password and new password are required");
+  }
+  const user = await User.findById(req.user?._id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  const isPasswordCorrect = await user.isPasswordMatched(oldPassword);
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Old password is incorrect");
+  }
+  user.password = newPassword;
+  const updatePassword = await user.save({ validateBeforeSave: true });
+  if (!updatePassword) {
+    throw new ApiError(500, "Something went wrong while updating password");
+  }
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+// get user profile - API
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id).select("-password");
+  if (!user) {
+    throw new ApiError(404, "user not found");
+  }
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "User profile fetched successfully"));
+});
+export { userRegister, userLogin, userLogout, changePassword, getUserProfile };
