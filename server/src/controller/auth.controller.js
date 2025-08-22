@@ -34,7 +34,7 @@ const userRegister = asyncHandler(async (req, res) => {
   );
   //sending welcome email to user
   const emailOption = {
-    from: process.env.SENDER_EMAIL,
+    from: process.env.SENDER_EMAIL, 
     to: user.email,
     subject: "Welcome to our application",
     text: `Hello ${user.name},\n\nThank you for registering with our application! We're excited to have you on board.\n\nBest regards,\nThe Team`,
@@ -134,4 +134,33 @@ const getUserProfile = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "User profile fetched successfully"));
 });
-export { userRegister, userLogin, userLogout, changePassword, getUserProfile };
+
+//send verifivation opt to user's email - API
+const sendVerifyOtp = asyncHandler(async (req, res) => {
+ const user = await User.findById(req.user?._id);
+ console.log("Checking user ", user)
+  if (!user) {
+    throw new ApiError(404, "user not found");
+  }
+  if(user.isAccountverify){
+    res.status(200).json(new ApiError(200, {}, "Your account already verify"))
+  }
+  const otp = String(Math.floor(10000 + Math.random() * 900000))
+  user.varifyOtp = otp;
+  user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
+  await user.save({ validateBeforeSave: true })
+
+  const mailOption = {
+    from: process.env.SENDER_EMAIL,
+    to: user.email,
+    subject: "Account verification mail",
+    text: `Your OTP is ${otp}. Verify your account using this OTP`
+  }
+  const mailRes = await transporter.sendMail(mailOption)
+  if(mailRes){
+  res.status(200).json(new ApiResponse(200, {}, "Verification OTP send on your email"))
+  }
+})
+
+
+export { userRegister, userLogin, userLogout, changePassword, getUserProfile, sendVerifyOtp };
