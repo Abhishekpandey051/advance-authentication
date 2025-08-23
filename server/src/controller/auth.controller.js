@@ -106,19 +106,29 @@ const userLogout = asyncHandler(async (req, res) => {
 
 // change (forgot) current password - API
 const changePassword = asyncHandler(async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  if (!(oldPassword || newPassword)) {
-    throw new ApiError(400, "Old password and new password are required");
+  const { oldPassword, newPassword, otp } = req.body;
+  if (!(oldPassword || newPassword || otp)) {
+    throw new ApiError(400, "Old password, OTP and new password are required");
   }
   const user = await User.findById(req.user?._id);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
+
   const isPasswordCorrect = await user.isPasswordMatched(oldPassword);
   if (!isPasswordCorrect) {
     throw new ApiError(400, "Old password is incorrect");
   }
+  if(user.resetOtp === "" ||  String(user.resetOtp).trim() !== String(otp).trim()) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  if(user.resetOtpExpireAt < Date.now()) {
+    throw new ApiError(400, "OTP has expired. Please request a new one.");
+  }
   user.password = newPassword;
+  user.resetOtp = ""
+  user.resetOtpExpireAt = 0
   const updatePassword = await user.save({ validateBeforeSave: true });
   if (!updatePassword) {
     throw new ApiError(500, "Something went wrong while updating password");
@@ -178,7 +188,6 @@ const verifyEmail = asyncHandler(async (req, res) => {
   }
   const user = await User.findById(req.user?._id);
 
-  console.log("Reciever OTP", typeof user.varifyOtp, String(otp));
   if (!user) {
     throw new ApiError(404, "User not found");
   }
@@ -219,7 +228,7 @@ const sendResetOtp = asyncHandler(async (req, res) => {
 
   const otp = String(Math.floor(10000 + Math.random() * 900000));
   user.resetOtp = otp;
-  user.verifyOtpExpireAt = Date.now() + 15 * 60 * 60 * 1000;
+  user.resetOtpExpireAt = Date.now() + 15 * 60 * 60 * 1000;
   await user.save({ validateBeforeSave: true });
 
   try {
