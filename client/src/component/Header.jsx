@@ -1,8 +1,29 @@
+import axios from "axios";
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { BASE_URL } from "../constant";
+import { removeUser } from "../store/userSlice";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Simulated logged-in state (replace with your auth state)
+  // const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isLoggedIn = useSelector((store)=>store.user)
+  const dispatch = useDispatch()
+  const navigate = useNavigate();
+
+  // Simulated logout handler
+  const handleLogout = async () => {
+    try {
+      await axios.post(BASE_URL + "/logout", {}, {withCredentials:true})
+      dispatch(removeUser())
+      navigate("/auth")
+    } catch (error) {
+      console.log(error)
+    }
+  };
 
   const navLinks = [
     { name: "Home", href: "#" },
@@ -30,15 +51,31 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Right section: Login Button always on the right */}
+        {/* Right section */}
         <div className="flex items-center gap-2">
-          {/* Desktop: Login */}
-          <Link
-            to="/auth"
-            className="hidden md:inline-block px-5 py-2 bg-blue-700 text-white rounded transition hover:bg-blue-800"
-          >
-            Login
-          </Link>
+          {isLoggedIn ? (
+            <>
+              {isLoggedIn?.isAccountverify === false && <Link
+                to="/verify"
+                className="hidden md:inline-block px-5 py-2 bg-green-600 text-white rounded transition hover:bg-green-700"
+              >
+                Verify Account
+              </Link>}
+              <button
+                onClick={handleLogout}
+                className="hidden md:inline-block px-5 py-2 bg-red-600 text-white rounded transition hover:bg-red-700"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/auth"
+              className="hidden md:inline-block px-5 py-2 bg-blue-700 text-white rounded transition hover:bg-blue-800"
+            >
+              Login
+            </Link>
+          )}
 
           {/* Mobile Menu Button */}
           <button
@@ -58,7 +95,7 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Nav, includes Login button at the bottom */}
+      {/* Mobile Nav */}
       {menuOpen && (
         <nav className="md:hidden bg-gray-900 px-4 pb-4 border-b border-gray-700">
           <div className="flex flex-col gap-4">
@@ -72,14 +109,35 @@ const Header = () => {
                 {link.name}
               </a>
             ))}
-            {/* Mobile: Login shown in menu */}
-            <Link
-              to='/auth'
-              className="px-5 py-2 bg-blue-700 text-white rounded transition hover:bg-blue-800"
-              onClick={() => setMenuOpen(false)}
-            >
-              Login
-            </Link>
+
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/verify"
+                  className="px-5 py-2 bg-green-600 text-white rounded transition hover:bg-green-700"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Verify Account
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMenuOpen(false);
+                  }}
+                  className="px-5 py-2 bg-red-600 text-white rounded transition hover:bg-red-700"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                className="px-5 py-2 bg-blue-700 text-white rounded transition hover:bg-blue-800"
+                onClick={() => setMenuOpen(false)}
+              >
+                Login
+              </Link>
+            )}
           </div>
         </nav>
       )}

@@ -7,6 +7,7 @@ import { adduser } from "../store/userSlice";
 
 const SigninSignup = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState("");
   const [authKey, setAuthKey] = useState({
     name: "",
     email: "",
@@ -41,18 +42,16 @@ const SigninSignup = () => {
           { email: authKey.email, password: authKey.password },
           { withCredentials: true }
         );
-        console.log("Response", res?.data?.data?.user)
+        console.log("Response", res?.data?.data?.user);
         if (res && res.data) {
           dispatch(adduser(res?.data?.data?.user));
           resetForm();
           navigate("/");
         }
       } else {
-        const res = await axios.post(
-          BASE_URL + "/signup",
-          { name: authKey.name, email: authKey.email, password: authKey.password },
-          { withCredentials: true }
-        );
+        const res = await axios.post(BASE_URL + "/registers", authKey, {
+          withCredentials: true,
+        });
         if (res && res.data) {
           dispatch(adduser(res.data));
           resetForm();
@@ -61,11 +60,18 @@ const SigninSignup = () => {
       }
     } catch (error) {
       console.error(error);
-      alert(
-        error.response?.data?.message ||
-        "An error occurred during authentication. Please try again."
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "An error occurred during authentication. Please try again."
       );
     }
+  };
+
+  const handleForgotPassword = () => {
+    // Implement your forgot password flow navigation or modal here
+    // For example:
+    navigate("/reset-password");
   };
 
   return (
@@ -120,9 +126,20 @@ const SigninSignup = () => {
           required
           value={authKey.password}
           onChange={handleChange}
-          className="w-full p-3 mb-6 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full p-3 mb-2 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
           placeholder="Enter your password"
         />
+
+        {/* Forgot Password button: shown only in Login mode */}
+        {isLogin && (
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            className="mb-6 text-sm text-blue-500 hover:underline focus:outline-none"
+          >
+            Forgot Password?
+          </button>
+        )}
 
         <button
           type="submit"
@@ -130,6 +147,12 @@ const SigninSignup = () => {
         >
           {isLogin ? "Login" : "Sign Up"}
         </button>
+
+        {error && (
+          <p className="p-2 text-red-700 font-semibold py-3 rounded-md transition mt-4">
+            {error}
+          </p>
+        )}
       </form>
 
       <p

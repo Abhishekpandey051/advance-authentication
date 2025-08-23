@@ -9,10 +9,10 @@ router.route("/login").post(userLogin)
 
 // secure route
 router.route("/logout").post(verifyJswt, userLogout)
-router.route("/forgot-password").patch(verifyJswt, changePassword)
+router.route("/forgot-password").patch( changePassword)
 router.route("/profile").get(verifyJswt, getUserProfile)
 router.route("/send-otp").post(verifyJswt, sendVerifyOtp)
 router.route("/verify-emial").post(verifyJswt, verifyEmail)
-router.route("/reset-otp").post(verifyJswt, sendResetOtp)
+router.route("/reset-otp").post(sendResetOtp)
 
 export default router;

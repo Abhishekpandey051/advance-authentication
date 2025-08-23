@@ -106,11 +106,11 @@ const userLogout = asyncHandler(async (req, res) => {
 
 // change (forgot) current password - API
 const changePassword = asyncHandler(async (req, res) => {
-  const { oldPassword, newPassword, otp } = req.body;
+  const { oldPassword, newPassword, otp, email } = req.body;
   if (!(oldPassword || newPassword || otp)) {
     throw new ApiError(400, "Old password, OTP and new password are required");
   }
-  const user = await User.findById(req.user?._id);
+  const user = await User.findOne({email});
   if (!user) {
     throw new ApiError(404, "User not found");
   }
@@ -119,16 +119,19 @@ const changePassword = asyncHandler(async (req, res) => {
   if (!isPasswordCorrect) {
     throw new ApiError(400, "Old password is incorrect");
   }
-  if(user.resetOtp === "" ||  String(user.resetOtp).trim() !== String(otp).trim()) {
+  if (
+    user.resetOtp === "" ||
+    String(user.resetOtp).trim() !== String(otp).trim()
+  ) {
     throw new ApiError(400, "Invalid OTP");
   }
 
-  if(user.resetOtpExpireAt < Date.now()) {
+  if (user.resetOtpExpireAt < Date.now()) {
     throw new ApiError(400, "OTP has expired. Please request a new one.");
   }
   user.password = newPassword;
-  user.resetOtp = ""
-  user.resetOtpExpireAt = 0
+  user.resetOtp = "";
+  user.resetOtpExpireAt = 0;
   const updatePassword = await user.save({ validateBeforeSave: true });
   if (!updatePassword) {
     throw new ApiError(500, "Something went wrong while updating password");
@@ -146,7 +149,17 @@ const getUserProfile = asyncHandler(async (req, res) => {
   }
   res
     .status(200)
-    .json(new ApiResponse(200, {name:user.name, isAccountverify: user.isAccountverify}, "User profile fetched successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        {
+          name: user.name,
+          email: user.email,
+          isAccountverify: user.isAccountverify,
+        },
+        "User profile fetched successfully"
+      )
+    );
 });
 
 //send verifivation opt to user's email - API
@@ -211,7 +224,19 @@ const verifyEmail = asyncHandler(async (req, res) => {
   user.varifyOtp = ""; // clear OTP after use
   user.verifyOtpExpireAt = 0; // clear expiry
   await user.save({ validateBeforeSave: true });
-  res.status(200).json(new ApiResponse(200, {}, "Accound verify successfull"));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          name: user?.name,
+          email: user?.name,
+          isAccountverify: user?.isAccountverify,
+        },
+        "Accound verify successfull"
+      )
+    );
 });
 
 // send password reset OTP - API
