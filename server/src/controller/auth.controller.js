@@ -33,18 +33,22 @@ const userRegister = asyncHandler(async (req, res) => {
     "-password -varifyOtp -verifyOtpExpireAt -resetOtp -resetOtpExpireAt"
   );
   //sending welcome email to user
-  const emailOption = {
-    from: process.env.SENDER_EMAIL, 
-    to: user.email,
-    subject: "Welcome to our application",
-    text: `Hello ${user.name},\n\nThank you for registering with our application! We're excited to have you on board.\n\nBest regards,\nThe Team`,
-  };
+  try {
+    const emailOption = {
+      from: process.env.SENDER_EMAIL,
+      to: user.email,
+      subject: "Welcome to our application",
+      text: `Hello ${user.name},\n\nThank you for registering with our application! We're excited to have you on board.\n\nBest regards,\nThe Team`,
+    };
 
-  await transporter.sendMail(emailOption);
+    await transporter.sendMail(emailOption);
 
-  return res
-    .status(201)
-    .json(new ApiResponse(200, createdUser, "User register successfully"));
+    return res
+      .status(201)
+      .json(new ApiResponse(200, createdUser, "User register successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Failed to send OTP. Please try again.");
+  }
 });
 
 // Login user - API
@@ -137,30 +141,108 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
 //send verifivation opt to user's email - API
 const sendVerifyOtp = asyncHandler(async (req, res) => {
- const user = await User.findById(req.user?._id);
- console.log("Checking user ", user)
+  const user = await User.findById(req.user?._id);
+
   if (!user) {
     throw new ApiError(404, "user not found");
   }
-  if(user.isAccountverify){
-    res.status(200).json(new ApiError(200, {}, "Your account already verify"))
+  if (user.isAccountverify) {
+    res.status(200).json(new ApiError(200, {}, "Your account already verify"));
   }
-  const otp = String(Math.floor(10000 + Math.random() * 900000))
+  const otp = String(Math.floor(10000 + Math.random() * 900000));
   user.varifyOtp = otp;
-  user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
-  await user.save({ validateBeforeSave: true })
+  user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000;
+  await user.save({ validateBeforeSave: true });
 
-  const mailOption = {
-    from: process.env.SENDER_EMAIL,
-    to: user.email,
-    subject: "Account verification mail",
-    text: `Your OTP is ${otp}. Verify your account using this OTP`
+  try {
+    const mailOption = {
+      from: process.env.SENDER_EMAIL,
+      to: user.email,
+      subject: "Account verification mail",
+      text: `Your OTP is ${otp}. Verify your account using this OTP`,
+    };
+    await transporter.sendMail(mailOption);
+    res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Verification OTP send on your email"));
+  } catch (error) {
+    throw new ApiError(500, "Failed to send OTP. Please try again.");
   }
-  const mailRes = await transporter.sendMail(mailOption)
-  if(mailRes){
-  res.status(200).json(new ApiResponse(200, {}, "Verification OTP send on your email"))
+});
+
+//Check account verify - API
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { otp } = req.body;
+  if (!otp) {
+    throw new ApiError(400, "OTP is required");
   }
-})
+  const user = await User.findById(req.user?._id);
 
+  console.log("Reciever OTP", typeof user.varifyOtp, String(otp));
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
-export { userRegister, userLogin, userLogout, changePassword, getUserProfile, sendVerifyOtp };
+  if (user.isAccountverify) {
+    throw new ApiError(409, "Account already verified");
+  }
+
+  if (user.verifyOtpExpireAt < Date.now()) {
+    throw new ApiError(400, "OTP has expired. Please request a new one.");
+  }
+
+  if (
+    user.varifyOtp === "" ||
+    String(user.varifyOtp).trim() !== String(otp).trim()
+  ) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  user.isAccountverify = true;
+  user.varifyOtp = ""; // clear OTP after use
+  user.verifyOtpExpireAt = 0; // clear expiry
+  await user.save({ validateBeforeSave: true });
+  res.status(200).json(new ApiResponse(200, {}, "Accound verify successfull"));
+});
+
+// send password reset OTP - API
+const sendResetOtp = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const otp = String(Math.floor(10000 + Math.random() * 900000));
+  user.resetOtp = otp;
+  user.verifyOtpExpireAt = Date.now() + 15 * 60 * 60 * 1000;
+  await user.save({ validateBeforeSave: true });
+
+  try {
+    const mailOption = {
+      from: process.env.SENDER_EMAIL,
+      to: user.email,
+      subject: "Password Reset OTP",
+      text: `Your OTP for reseting your password is ${otp}. Use this OTP to procces with reseting your password`,
+    };
+    await transporter.sendMail(mailOption);
+    res.status(200).json(new ApiResponse(200, {}, "OTP send your email"));
+  } catch (error) {
+    throw new ApiError(500, "Failed to send OTP. Please try again.");
+  }
+});
+
+export {
+  userRegister,
+  userLogin,
+  userLogout,
+  changePassword,
+  getUserProfile,
+  sendVerifyOtp,
+  verifyEmail,
+  sendResetOtp,
+};

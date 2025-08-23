@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changePassword, getUserProfile, sendVerifyOtp, userLogin, userLogout, userRegister } from "../controller/auth.controller.js";
+import { changePassword, getUserProfile, sendResetOtp, sendVerifyOtp, userLogin, userLogout, userRegister, verifyEmail } from "../controller/auth.controller.js";
 import { verifyJswt } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -11,6 +11,8 @@ router.route("/login").post(userLogin)
 router.route("/logout").post(verifyJswt, userLogout)
 router.route("/forgot-password").patch(verifyJswt, changePassword)
 router.route("/profile").get(verifyJswt, getUserProfile)
-router.route("/verify-otp").post(verifyJswt, sendVerifyOtp)
+router.route("/send-otp").post(verifyJswt, sendVerifyOtp)
+router.route("/verify-emial").post(verifyJswt, verifyEmail)
+router.route("/reset-otp").post(verifyJswt, sendResetOtp)
 
 export default router;
