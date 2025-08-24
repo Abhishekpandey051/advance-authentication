@@ -4,6 +4,7 @@ import { BASE_URL } from "../constant";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { adduser } from "../store/userSlice";
+import { toast } from "react-toastify";
 
 const EnterOTP = () => {
   const [otp, setOtp] = useState("");
@@ -28,6 +29,7 @@ const EnterOTP = () => {
         { withCredentials: true }
       );
       if (res) {
+        toast(res?.data?.message);
         dispatch(adduser(res.data?.data));
         navigate("/");
       }
@@ -67,12 +69,11 @@ const EnterOTP = () => {
           <button
             type="submit"
             className="w-full py-3 mt-3 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-md transition"
-            onClick={()=>navigate("/verify")}
+            onClick={() => navigate("/verify")}
           >
-            Verify OTP
+            Re-send OTP
           </button>
         </form>
-        
 
         {message && (
           <p

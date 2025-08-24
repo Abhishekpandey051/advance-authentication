@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { BASE_URL } from "../constant";
 import { removeUser } from "../store/userSlice";
+import { toast } from "react-toastify";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,9 +18,12 @@ const Header = () => {
   // Simulated logout handler
   const handleLogout = async () => {
     try {
-      await axios.post(BASE_URL + "/logout", {}, {withCredentials:true})
-      dispatch(removeUser())
+      const res = await axios.post(BASE_URL + "/logout", {}, {withCredentials:true})
+      if(res){
+        toast(res?.data?.message)
+        dispatch(removeUser())
       navigate("/auth")
+      }
     } catch (error) {
       console.log(error)
     }

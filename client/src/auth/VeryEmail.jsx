@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { BASE_URL } from "../constant";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const VerifyEmail = () => {
   const [error, setError] = useState("");
@@ -20,9 +21,11 @@ const VerifyEmail = () => {
         { withCredentials: true }
       );
       if (res) {
+        toast(res?.data?.message)
         navigate("/otp");
       }
     } catch (error) {
+      toast(error?.message)
       console.log("ERROR", error);
       setError(error.message);
     }

@@ -2,28 +2,35 @@ import axios from "axios";
 import React, { useState } from "react";
 import { BASE_URL } from "../constant";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const ForgotPassword = () => {
-    const [resetPassworKey, setResetPasswordKey] = useState({
-        email:'',
-        otp: '',
-        oldPassword: '',
-        newPassword: ''
-    })
+  const [resetPassworKey, setResetPasswordKey] = useState({
+    email: "",
+    otp: "",
+    oldPassword: "",
+    newPassword: "",
+  });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleResetOtp = async () => {
     try {
-        const res = await axios.post(BASE_URL + "/reset-otp", {email:resetPassworKey.email}, {withCredentials:true})
-        console.log(res)
-        if(res) {
-            setMessage(res?.data?.message)
-        }
+      const res = await axios.post(
+        BASE_URL + "/reset-otp",
+        { email: resetPassworKey.email },
+        { withCredentials: true }
+      );
+      console.log(res);
+      if (res) {
+        toast(res?.data?.message);
+        setMessage(res?.data?.message);
+      }
     } catch (error) {
-        setMessage(error.message)
+      toast(error.message);
+      setMessage(error.message);
     }
-  }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,17 +53,21 @@ const ForgotPassword = () => {
     setMessage("Processing password change...");
 
     try {
-        const res = await axios.patch(BASE_URL + "/forgot-password", resetPassworKey, {withCredentials:true})
-        console.log("Forgot password", res)
-        if(res) {
-            navigate("/auth")
-            setMessage("Password changed successfully!");
-        }
+      const res = await axios.patch(
+        BASE_URL + "/forgot-password",
+        resetPassworKey,
+        { withCredentials: true }
+      );
+      console.log("Forgot password", res);
+      if (res) {
+        toast(res?.data?.message);
+        navigate("/auth");
+        setMessage("Password changed successfully!");
+      }
     } catch (error) {
-        setMessage(error.message || "Failed to change update password")
+      toast(error?.message);
+      setMessage(error.message || "Failed to change update password");
     }
-    
-    
   };
 
   return (
@@ -64,7 +75,8 @@ const ForgotPassword = () => {
       <div className="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-md text-center">
         <h1 className="text-3xl font-bold text-white mb-6">Reset Password</h1>
         <p className="text-gray-400 mb-6">
-          Enter the OTP sent to your email along with your old password and your new password.
+          Enter the OTP sent to your email along with your old password and your
+          new password.
         </p>
 
         <form onSubmit={handleSubmit} className="text-left">
@@ -75,7 +87,9 @@ const ForgotPassword = () => {
             type="text"
             id="email"
             value={resetPassworKey.email}
-            onChange={(e) => setResetPasswordKey({ ...resetPassworKey, email: e.target.value })}
+            onChange={(e) =>
+              setResetPasswordKey({ ...resetPassworKey, email: e.target.value })
+            }
             className="w-full p-3  rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             placeholder="you@gmail.com"
           />
@@ -88,7 +102,7 @@ const ForgotPassword = () => {
             Reset OTP
           </button>
 
-           <label className="block mb-2 text-gray-300" htmlFor="oldPassword">
+          <label className="block mb-2 text-gray-300" htmlFor="oldPassword">
             OTP
           </label>
           <input
@@ -96,7 +110,9 @@ const ForgotPassword = () => {
             id="otp"
             value={resetPassworKey.otp}
             maxLength={6}
-            onChange={(e) => setResetPasswordKey({...resetPassworKey, otp: e.target.value})}
+            onChange={(e) =>
+              setResetPasswordKey({ ...resetPassworKey, otp: e.target.value })
+            }
             className="w-full p-3 mb-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             placeholder="6-digit OTP"
           />
@@ -108,7 +124,12 @@ const ForgotPassword = () => {
             type="password"
             id="oldPassword"
             value={resetPassworKey.oldPassword}
-            onChange={(e) => setResetPasswordKey({...resetPassworKey, oldPassword: e.target.value})}
+            onChange={(e) =>
+              setResetPasswordKey({
+                ...resetPassworKey,
+                oldPassword: e.target.value,
+              })
+            }
             className="w-full p-3 mb-4 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             placeholder="Enter your old password"
           />
@@ -120,7 +141,12 @@ const ForgotPassword = () => {
             type="password"
             id="newPassword"
             value={resetPassworKey.newPassword}
-            onChange={(e) => setResetPasswordKey({...resetPassworKey, newPassword: e.target.value})}
+            onChange={(e) =>
+              setResetPasswordKey({
+                ...resetPassworKey,
+                newPassword: e.target.value,
+              })
+            }
             className="w-full p-3 mb-6 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             placeholder="Enter your new password"
           />

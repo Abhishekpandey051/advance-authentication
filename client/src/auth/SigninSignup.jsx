@@ -4,6 +4,7 @@ import { BASE_URL } from "../constant";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { adduser } from "../store/userSlice";
+import { toast } from "react-toastify";
 
 const SigninSignup = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -44,23 +45,27 @@ const SigninSignup = () => {
         );
         console.log("Response", res?.data?.data?.user);
         if (res && res.data) {
+          console.log(res)
+          toast(res?.data?.message)
           dispatch(adduser(res?.data?.data?.user));
           resetForm();
           navigate("/");
         }
       } else {
-        const res = await axios.post(BASE_URL + "/registers", authKey, {
+        const res = await axios.post(BASE_URL + "/register", authKey, {
           withCredentials: true,
         });
         if (res && res.data) {
+          toast(res?.data?.message)
           dispatch(adduser(res.data));
           resetForm();
-          navigate("/");
+          setIsLogin(true)
         }
       }
     } catch (error) {
       console.error(error);
-      setError(
+        toast("Invalid credential")
+        setError(
         error?.response?.data?.message ||
           error?.message ||
           "An error occurred during authentication. Please try again."
@@ -137,7 +142,7 @@ const SigninSignup = () => {
             onClick={handleForgotPassword}
             className="mb-6 text-sm text-blue-500 hover:underline focus:outline-none"
           >
-            Forgot Password?
+            Reset Password?
           </button>
         )}
 

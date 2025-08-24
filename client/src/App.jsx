@@ -7,6 +7,7 @@ import SigninSignup from "./auth/SigninSignup"
 import VeryEmail from "./auth/VeryEmail"
 import EnterOTP from "./auth/EnterOtp"
 import ForgotPassword from "./auth/ForgotPassword"
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
       </Routes>
       </BrowserRouter>
     </Provider>
+    <ToastContainer/>
     </>
   )
 }
